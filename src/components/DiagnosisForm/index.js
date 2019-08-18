@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import styled from '@emotion/styled/macro';
 import { Container, Row, Col } from 'react-bootstrap';
-import Input from '../Input';
-import Result from '../Result';
+import CheckForm from '../CheckForm';
 
 const Wrapper = styled.main({
   minHeight: '400px',
@@ -11,19 +10,13 @@ const Wrapper = styled.main({
 })
 
 class Main extends Component {
-  state = {
-    compInput : false,
-  }
   render() {
-    let {compInput} = this.state;
-    let result = (compInput) ? <Result/> : <></>
     return (
       <Wrapper>
         <Container>
           <Row className="justify-content-md-center">
             <Col md={9} sm={12}>
-              <Input/>
-              {result}
+              <CheckForm/>
             </Col>
           </Row>
         </Container>

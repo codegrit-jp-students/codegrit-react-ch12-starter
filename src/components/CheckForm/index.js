@@ -1,9 +1,11 @@
+/** @jsx jsx */
 import React, { Component } from 'react';
 import styled from '@emotion/styled/macro';
 import { Formik, Form, Field } from 'formik';
 import { jsx } from '@emotion/core';
 import css from '@emotion/css/macro';
 import { Row, Col } from 'react-bootstrap';
+import { calcBmi, calcIdealWeight ,getEvaluationJesso, getEvaluationForMale, getEvaluationForFemale } from '../../lib/diagnosisUtils'
 
 const SubmitDiv = styled.div({
   paddingTop: 30,
@@ -14,16 +16,37 @@ const SubmitDiv = styled.div({
 const btnStyle = {
   backgroundColor: '#2f2f2f',
   border: '1px solid #2f2f2f',
+  color: 'rgb(255, 255, 255)',
+  padding: '10px 70px',
+  margin: '30px 0px'
 }
 const ErrorMessage = styled.div({
+  color: 'rgb(255, 180, 0)',
 })
 
 const Title = styled.div({
   fontSize: 21,
   borderBottom: '4px solid rgb(186, 206, 222)',
   padding: '14 0',
+  marginBottom: '30px'
 })
+
+const ResultSubTitle = styled.div({
+  fontSize: '17px',
+  fontWeight: 'bold',
+  marginBottom: '1em',
+  color: 'Black',
+})
+
+const ResultText = styled.p({
+  fontSize: '21px',
+  marginBottom: '70px'
+})
+
 export default class extends Component {
+  state = {
+    formInput : false,
+  }
   validate = (values) => {
     const { 
       gender,
@@ -32,9 +55,8 @@ export default class extends Component {
       weight,
       fatRate,
     } = values;
-    console.log(values)
     const errors = {}
-    if (gender === 'n') {
+    if (gender === '') {
       errors.gender = '性別の選択は必須です。'
     }
     if (age === '') {
@@ -51,18 +73,55 @@ export default class extends Component {
     }
     if (Object.keys(errors).length > 0) {
       return errors
+    } else {
+      this.setState(values)
     }
   }
 
   handleSubmit = () => {
-    console.log('submit')
+    this.setState({
+      formInput : true,
+    })
   }
-
   render(){
+    const { 
+      formInput,
+      gender,
+      height,
+      weight,
+      fatRate 
+    } = this.state;
+
+    let result = 
+      <div css={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding:100,
+      }}>診断結果がここに表示されます。</div>
+
+    if (formInput) {
+      const idealWeight = calcIdealWeight(height)
+      const bmi = calcBmi(height, weight)
+      const evaluationJesso = getEvaluationJesso(bmi, fatRate)
+      const evaluation = (gender === 'm') ? getEvaluationForMale(bmi, fatRate) : getEvaluationForFemale(bmi, fatRate)
+      result = (
+        <div>
+          <ResultSubTitle>日本肥満学会の定める理想体重(BMI22)</ResultSubTitle>
+          <ResultText>{idealWeight}</ResultText>
+          <ResultSubTitle>BMI</ResultSubTitle>
+          <ResultText>{bmi}</ResultText>
+          <ResultSubTitle>日本肥満学会基準の体型診断(体脂肪率を考慮しません)</ResultSubTitle>
+          <ResultText>{evaluationJesso}</ResultText>
+          <ResultSubTitle>体脂肪率を考慮した体型診断</ResultSubTitle>
+          <ResultText>{evaluation}</ResultText>
+        </div>
+      )
+    }
+    
     return(
       <Formik
         initialValues={{ 
-          gender: "n",
+          gender: '',
           age:'',
           height:'',
           weight:'',
@@ -103,7 +162,10 @@ export default class extends Component {
                       type="number"
                       placeholder="例: 25"
                     />
-                    <span>歳</span>
+                    <span css={css`
+                      align-self: flex-end;
+                      margin-left: 10px;
+                    `}>歳</span>
                   </div>
                   {errors.age && <ErrorMessage>{errors.age}</ErrorMessage>}
                 </Col>
@@ -111,24 +173,38 @@ export default class extends Component {
               <Row>
                 <Col>
                   <label>身長:</label>
+                  <div css={css`
+                    display:flex; 
+                    flex-direction: row;`
+                  }>
                   <Field
                     name="height"
                     type="number"
                     placeholder="例: 158"
-                  >
-                  </Field>
-                  <span>cm</span>
+                  />
+                  <span css={css`
+                    align-self: flex-end;
+                    margin-left: 10px;
+                  `}>cm</span>
+                  </div>
                   {errors.height && <ErrorMessage>{errors.height}</ErrorMessage>}
                 </Col>
                 <Col>
                   <label>体重:</label>
-                  <div>
+                  <div css={css`
+                    display:flex; 
+                    flex-direction: row;`
+                  }>
                     <Field
                       name="weight"
                       type="number"
                       placeholder="例: 44"
                     />
-                    <span>kg</span>
+                    <span css={css`
+                      align-self: flex-end;
+                      margin-left: 10px;
+                      `
+                    }>kg</span>
                   </div>
                   {errors.weight && <ErrorMessage>{errors.weight}</ErrorMessage>}
                 </Col>
@@ -136,14 +212,20 @@ export default class extends Component {
               <Row>
                 <Col>
                   <label>体脂肪率:</label>
-                  <div>
+                  <div css={css`
+                    display:flex; 
+                    flex-direction: row;`
+                  }>
                     <Field
                       name="fatRate"
                       type="number"
                       step="0.1"
                       placeholder="例: 25.4"
                     />
-                    <span>%</span>
+                    <span css={css`
+                      align-self: flex-end;
+                      margin-left: 10px;
+                    `}>%</span>
                   </div>
                   {errors.fatRate && <ErrorMessage>{errors.fatRate}</ErrorMessage>}
                 </Col>
@@ -153,6 +235,8 @@ export default class extends Component {
               <SubmitDiv>
                 <button type="submit" css={btnStyle}>診断結果を見る</button>
               </SubmitDiv>
+              <Title>２．診断結果</Title>
+              {result}
             </Form>
           )
         }}
